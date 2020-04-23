@@ -1,0 +1,181 @@
+---
+title: "HW1 Markdown"
+author: "Caden Zonnefeld"
+date: "`r format(Sys.time(),'%d %B %Y')`"
+output: pdf_document
+---
+
+```{r, include=FALSE}
+knitr::opts_chunk$set(results = "hide")
+```
+ 
+## Question 1
+I assigned the iris data to a variable, added an ID column, and created a simple sumRow function that calculates the sum of numeric entries.
+```{r}
+myData <- iris
+myData$id <- 1:nrow(myData)
+sumRow <- function(x,i){
+  numericColumns <- x[1:4]
+  sum(numericColumns[i,])
+}
+```
+
+## Question 2
+I used a for loop to calculate the row sums of the numeric data entries.
+```{r}
+numericColumns <- myData[1:4]
+rowSums <- vector(length=150L)
+for (i in 1:150){
+  rowSums[i] <- sum(numericColumns[i,])
+}
+```
+
+## Question 3
+I wrote another version of a sum row function, this time to be used by the apply function.
+```{r}
+rowSums2 <- vector(length=150L)
+sumRow2 <- function(x){
+  numericColumns <- x[1:4]
+  sum(numericColumns)
+}
+rowSums2 <- apply(myData[1:4],1,sumRow2)
+```
+
+## Question 4
+I modified my sum row function so that it could be used with the sapply function, this required me to first create a transposed version of the dataset.
+```{r}
+rowSums3 <- vector(length=150L)
+transposeData <- data.frame(t(myData[1:4]))
+typeof(transposeData)
+sumRow3 <- function(x){
+  sum(x)
+}
+rowSums3 <- sapply(transposeData,sumRow3)
+```
+
+## Question 5
+Using the tidyr library, I converted the data into a long form of dataset.
+```{r}
+library(tidyr)
+longData <- gather(myData, key = "FlowerAttributes", value = "Values", Sepal.Length,
+                   Sepal.Width, Petal.Length, Petal.Width)
+```
+
+## Question 6
+I used the aggregate function to find the mean value for each flower attribute.
+```{r}
+aggregateNumeric <- aggregate(Values~FlowerAttributes,longData,mean)
+aggregateNumeric["AverageValueForAttribute"] <- aggregateNumeric["Values"]
+aggregateNumeric <- aggregateNumeric[-2]
+```
+
+## Question 7
+I merged the aggregated mean values from the previous question with the long dataset.
+```{r}
+longData <- merge(longData,aggregateNumeric,by="FlowerAttributes")
+```
+
+## Question 8
+I repeated the process of mean aggregation and merging, this time using the mean for each flower species.
+```{r}
+aggregateSpecies <- aggregate(Values~Species+FlowerAttributes,longData,mean)
+aggregateSpecies["AverageValueForSpecies"] <- aggregateSpecies["Values"]
+aggregateSpecies <- aggregateSpecies[-3]
+
+completeLongData <- merge(longData,aggregateSpecies,by=c("Species","FlowerAttributes"))
+```
+
+## Question 9
+I reversed the data from a long format into a wide format.
+```{r, message=FALSE}
+library(reshape2)
+wideData <- dcast(completeLongData,formula=Species+AverageValueForSpecies+
+                    AverageValueForAttribute+id~FlowerAttributes,value.var="Values")
+wideData <- wideData[-4]
+```
+
+## Question 10
+Set the working directory, loaded in each of the files, and set widths for each file.
+```{r}
+setwd("Documents/STAT 344")
+ia97 <- data.frame(read.fwf("1997ia.txt",widths=c(3,4,9,9,9,5,5,5,9,9,9,5,5,5,9,9,9,
+                                                  5,5,5,7,7,7,8,8,8,5,5,5,46,3)))
+ia18 <- data.frame(read.fwf("2018ia.txt",widths=c(3,4,9,9,9,5,5,5,9,9,9,5,5,5,9,9,9,
+                                                  5,5,5,7,7,7,8,8,8,5,5,5,46,3,22)))
+```
+Added a year column to each of the datasets.
+```{r}
+ia97["Year"] <- 1997
+ia18["Year"] <- 2018
+```
+Renamed the columns in each of the datasets so that they describe their contents.
+```{r, message=FALSE}
+library(dplyr)
+
+ia97 <- ia97 %>%
+  rename(StateCode = V1, CountyCode = V2, PovEstimate = V3, PovEstimate90CILower = V4,
+         PovEstimate90CIUpper = V5, PovertyPerc = V6, PovertyPerc90CILower = V7,
+         PovertyPerc90CIUpper = V8, PovEstimate0to17 = V9,
+         PovEstimate0to1790CILower = V10,
+         PovEstimate0to1790CIUpper = V11, PovEstimatePerc0to17 = V12,
+         PovEstimatePerc0to1790CILower = V13, PovEstimatePerc0to1790CIUpper = V14, 
+         EstimateChild5to17Pov = V15, EstimateChild5to17Pov90CILower = V16,
+         EstimateChild5to17Pov90CIUpper = V17, EstimatedChild5to17PovPerc = V18,
+         EstimatedChild5to17PovPerc90CILower = V19,
+         EstimatedChild5to17PovPerc90CIUpper = V20, MedianHouseholdIncome = V21,
+         MedianHouseholdIncome90CILower = V22, MedianHouseholdIncome90CIUpper = V23,
+         EstimateChildUnder5Pov = V24, EstimateChildUnder5Pov90CILower = V25,
+         EstimateChildUnder5Pov90CIUpper = V26, EstimatedChildUnder5PovPerc = V27,
+         EstimatedChildUnder5PovPerc90CILower = V28,
+         EstimatedChildUnder5PovPerc90CIUpper = V29, StateOrCountyName = V30,
+         PostalStateCode = V31)
+ia18 <- ia18 %>%
+  rename(StateCode = V1, CountyCode = V2, PovEstimate = V3, PovEstimate90CILower = V4,
+         PovEstimate90CIUpper = V5, PovertyPerc = V6, PovertyPerc90CILower = V7,
+         PovertyPerc90CIUpper = V8, PovEstimate0to17 = V9,
+         PovEstimate0to1790CILower = V10,
+         PovEstimate0to1790CIUpper = V11, PovEstimatePerc0to17 = V12,
+         PovEstimatePerc0to1790CILower = V13, PovEstimatePerc0to1790CIUpper = V14, 
+         EstimateChild5to17Pov = V15, EstimateChild5to17Pov90CILower = V16,
+         EstimateChild5to17Pov90CIUpper = V17, EstimatedChild5to17PovPerc = V18,
+         EstimatedChild5to17PovPerc90CILower = V19,
+         EstimatedChild5to17PovPerc90CIUpper = V20, MedianHouseholdIncome = V21,
+         MedianHouseholdIncome90CILower = V22, MedianHouseholdIncome90CIUpper = V23,
+         EstimateChildUnder5Pov = V24, EstimateChildUnder5Pov90CILower = V25,
+         EstimateChildUnder5Pov90CIUpper = V26, EstimatedChildUnder5PovPerc = V27,
+         EstimatedChildUnder5PovPerc90CILower = V28,
+         EstimatedChildUnder5PovPerc90CIUpper = V29, StateOrCountyName = V30,
+         PostalStateCode = V31, FileName = V32)
+```
+Added a margin of error column to each dataset.
+```{r}
+ia97["MarginOfError"] <- abs(ia97$PovEstimate90CIUpper-ia97$PovEstimate)
+ia18["MarginOfError"] <- abs(ia18$PovEstimate90CIUpper-ia18$PovEstimate)
+```
+Made a subset of the 1997 and 2018 data for the suggested variables of year, county, poverty estimate,
+margin of error for the poverty estimate, and poverty percentage estimate.
+```{r}
+ia97trimmed <- subset(ia97, select=c("Year","StateOrCountyName","PovEstimate",
+                                     "MarginOfError","PovertyPerc"))
+ia18trimmed <- subset(ia18, select=c("Year","StateOrCountyName","PovEstimate",
+                                     "MarginOfError","PovertyPerc"))
+```
+Utilized an rbind to combine the data.
+```{r}
+cleanData <- rbind(ia97trimmed,ia18trimmed)
+```
+Renamed the columns for clarity and added the year for each measure so that year columns could be dropped.
+```{r}
+cleanData <- cleanData %>%
+  rename(County = StateOrCountyName, PovertyEstimate = PovEstimate,
+         MarginOfError = MarginOfError, PovertyPercentageEstimate = PovertyPerc)
+```
+Wrote the data into a comma separated value file.
+```{r}
+write.csv(cleanData,file="cleanSAIPEdata.csv")
+```
+
+
+
+
+
