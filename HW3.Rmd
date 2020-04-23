@@ -5,7 +5,11 @@ date: "`r format(Sys.time(),'%d %B %Y')`"
 output: pdf_document
 ---
 
+<<<<<<< HEAD
 I enjoy running and would never make an edit to this file.
+=======
+Changes made ot this file at 12:15 PM
+>>>>>>> Branch1
 
 ```{r, include=FALSE}
 knitr::opts_chunk$set(results = "hide")
